@@ -343,5 +343,40 @@ app.get("/search-notes/", authenticateToken, async (req, res)=>{
     }
 });
 
+
+// Search Notes by Tags
+app.get("/search-notes-by-tags/", authenticateToken, async (req, res) => {
+    const { user } = req.user;
+    const { tags } = req.query;
+  
+    if (!tags) {
+      return res
+        .status(400)
+        .json({ error: true, message: "Tags are required for search" });
+    }
+  
+    try {
+      // Convert tags string to array and trim whitespace
+      const tagArray = tags.split(',').map(tag => tag.trim());
+      
+      const matchingNotes = await Note.find({
+        userId: user._id,
+        tags: { $in: tagArray }
+      }).sort({ isPinned: -1 });
+  
+      return res.json({
+        error: false,
+        notes: matchingNotes,
+        message: "Notes matching the tags retrieved successfully",
+      });
+  
+    } catch (error) {
+      return res.status(500).json({
+        error: true,
+        message: "Internal Server Error",
+      });
+    }
+  });
+
 app.listen(8000);
 module.exports = app;
